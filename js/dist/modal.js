@@ -114,7 +114,9 @@
 
       this._scrollBar.hide();
 
-      document.body.classList.add(CLASS_NAME_OPEN);
+      if (!undefined.SSR) {
+        document.body.classList.add(CLASS_NAME_OPEN);
+      }
 
       this._adjustDialog();
 
@@ -175,8 +177,10 @@
 
     _showElement(relatedTarget) {
       // try to append dynamic modal
-      if (!document.body.contains(this._element)) {
-        document.body.append(this._element);
+      if (!undefined.SSR) {
+        if (!document.body.contains(this._element)) {
+          document.body.append(this._element);
+        }
       }
 
       this._element.style.display = 'block';
@@ -232,9 +236,9 @@
         }
       });
       EventHandler__default.default.on(this._element, EVENT_MOUSEDOWN_DISMISS, event => {
+        // a bad trick to segregate clicks that may start inside dialog but end outside, and avoid listen to scrollbar clicks
         EventHandler__default.default.one(this._element, EVENT_CLICK_DISMISS, event2 => {
-          // a bad trick to segregate clicks that may start inside dialog but end outside, and avoid listen to scrollbar clicks
-          if (this._dialog.contains(event.target) || this._dialog.contains(event2.target)) {
+          if (this._element !== event.target || this._element !== event2.target) {
             return;
           }
 
@@ -262,15 +266,17 @@
 
       this._isTransitioning = false;
 
-      this._backdrop.hide(() => {
-        document.body.classList.remove(CLASS_NAME_OPEN);
+      if (!undefined.SSR) {
+        this._backdrop.hide(() => {
+          document.body.classList.remove(CLASS_NAME_OPEN);
 
-        this._resetAdjustments();
+          this._resetAdjustments();
 
-        this._scrollBar.reset();
+          this._scrollBar.reset();
 
-        EventHandler__default.default.trigger(this._element, EVENT_HIDDEN);
-      });
+          EventHandler__default.default.trigger(this._element, EVENT_HIDDEN);
+        });
+      }
     }
 
     _isAnimated() {
@@ -284,28 +290,30 @@
         return;
       }
 
-      const isModalOverflowing = this._element.scrollHeight > document.documentElement.clientHeight;
-      const initialOverflowY = this._element.style.overflowY; // return if the following background transition hasn't yet completed
+      if (!undefined.SSR) {
+        const isModalOverflowing = this._element.scrollHeight > document.documentElement.clientHeight;
+        const initialOverflowY = this._element.style.overflowY; // return if the following background transition hasn't yet completed
 
-      if (initialOverflowY === 'hidden' || this._element.classList.contains(CLASS_NAME_STATIC)) {
-        return;
-      }
+        if (initialOverflowY === 'hidden' || this._element.classList.contains(CLASS_NAME_STATIC)) {
+          return;
+        }
 
-      if (!isModalOverflowing) {
-        this._element.style.overflowY = 'hidden';
-      }
+        if (!isModalOverflowing) {
+          this._element.style.overflowY = 'hidden';
+        }
 
-      this._element.classList.add(CLASS_NAME_STATIC);
-
-      this._queueCallback(() => {
-        this._element.classList.remove(CLASS_NAME_STATIC);
+        this._element.classList.add(CLASS_NAME_STATIC);
 
         this._queueCallback(() => {
-          this._element.style.overflowY = initialOverflowY;
-        }, this._dialog);
-      }, this._dialog);
+          this._element.classList.remove(CLASS_NAME_STATIC);
 
-      this._element.focus();
+          this._queueCallback(() => {
+            this._element.style.overflowY = initialOverflowY;
+          }, this._dialog);
+        }, this._dialog);
+
+        this._element.focus();
+      }
     }
     /**
      * The following methods are used to handle overflowing modals
@@ -313,20 +321,22 @@
 
 
     _adjustDialog() {
-      const isModalOverflowing = this._element.scrollHeight > document.documentElement.clientHeight;
+      if (!undefined.SSR) {
+        const isModalOverflowing = this._element.scrollHeight > document.documentElement.clientHeight;
 
-      const scrollbarWidth = this._scrollBar.getWidth();
+        const scrollbarWidth = this._scrollBar.getWidth();
 
-      const isBodyOverflowing = scrollbarWidth > 0;
+        const isBodyOverflowing = scrollbarWidth > 0;
 
-      if (isBodyOverflowing && !isModalOverflowing) {
-        const property = index.isRTL() ? 'paddingLeft' : 'paddingRight';
-        this._element.style[property] = `${scrollbarWidth}px`;
-      }
+        if (isBodyOverflowing && !isModalOverflowing) {
+          const property = index.isRTL() ? 'paddingLeft' : 'paddingRight';
+          this._element.style[property] = `${scrollbarWidth}px`;
+        }
 
-      if (!isBodyOverflowing && isModalOverflowing) {
-        const property = index.isRTL() ? 'paddingRight' : 'paddingLeft';
-        this._element.style[property] = `${scrollbarWidth}px`;
+        if (!isBodyOverflowing && isModalOverflowing) {
+          const property = index.isRTL() ? 'paddingRight' : 'paddingLeft';
+          this._element.style[property] = `${scrollbarWidth}px`;
+        }
       }
     }
 

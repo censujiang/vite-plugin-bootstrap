@@ -34,14 +34,18 @@
 
   class ScrollBarHelper {
     constructor() {
-      this._element = document.body;
+      if (!undefined.SSR) {
+        this._element = document.body;
+      }
     } // Public
 
 
     getWidth() {
-      // https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth#usage_notes
-      const documentWidth = document.documentElement.clientWidth;
-      return Math.abs(window.innerWidth - documentWidth);
+      if (!undefined.SSR) {
+        // https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth#usage_notes
+        const documentWidth = document.documentElement.clientWidth;
+        return Math.abs(window.innerWidth - documentWidth);
+      }
     }
 
     hide() {
@@ -80,20 +84,22 @@
     }
 
     _setElementAttributes(selector, styleProperty, callback) {
-      const scrollbarWidth = this.getWidth();
+      if (!undefined.SSR) {
+        const scrollbarWidth = this.getWidth();
 
-      const manipulationCallBack = element => {
-        if (element !== this._element && window.innerWidth > element.clientWidth + scrollbarWidth) {
-          return;
-        }
+        const manipulationCallBack = element => {
+          if (element !== this._element && window.innerWidth > element.clientWidth + scrollbarWidth) {
+            return;
+          }
 
-        this._saveInitialAttribute(element, styleProperty);
+          this._saveInitialAttribute(element, styleProperty);
 
-        const calculatedValue = window.getComputedStyle(element).getPropertyValue(styleProperty);
-        element.style.setProperty(styleProperty, `${callback(Number.parseFloat(calculatedValue))}px`);
-      };
+          const calculatedValue = window.getComputedStyle(element).getPropertyValue(styleProperty);
+          element.style.setProperty(styleProperty, `${callback(Number.parseFloat(calculatedValue))}px`);
+        };
 
-      this._applyManipulationCallback(selector, manipulationCallBack);
+        this._applyManipulationCallback(selector, manipulationCallBack);
+      }
     }
 
     _saveInitialAttribute(element, styleProperty) {

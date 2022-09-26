@@ -45,7 +45,6 @@
   const CLASS_DROPDOWN = 'dropdown';
   const SELECTOR_DROPDOWN_TOGGLE = '.dropdown-toggle';
   const SELECTOR_DROPDOWN_MENU = '.dropdown-menu';
-  const SELECTOR_DROPDOWN_ITEM = '.dropdown-item';
   const NOT_SELECTOR_DROPDOWN_TOGGLE = ':not(.dropdown-toggle)';
   const SELECTOR_TAB_PANEL = '.list-group, .nav, [role="tablist"]';
   const SELECTOR_OUTER = '.nav-item, .list-group-item';
@@ -124,7 +123,6 @@
           return;
         }
 
-        element.focus();
         element.removeAttribute('tabindex');
         element.setAttribute('aria-selected', true);
 
@@ -255,7 +253,6 @@
 
       toggle(SELECTOR_DROPDOWN_TOGGLE, CLASS_NAME_ACTIVE);
       toggle(SELECTOR_DROPDOWN_MENU, CLASS_NAME_SHOW);
-      toggle(SELECTOR_DROPDOWN_ITEM, CLASS_NAME_ACTIVE);
       outerElem.setAttribute('aria-expanded', open);
     }
 

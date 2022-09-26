@@ -10,74 +10,75 @@ import { isDisabled, isVisible } from '../util/index'
 /**
  * Constants
  */
+if (!import.meta.env.SSR) {
+  var SelectorEngineC = {
+    find(selector, element = document.documentElement) {
+      return [].concat(...Element.prototype.querySelectorAll.call(element, selector))
+    },
 
-const SelectorEngine = {
-  find(selector, element = document.documentElement) {
-    return [].concat(...Element.prototype.querySelectorAll.call(element, selector))
-  },
+    findOne(selector, element = document.documentElement) {
+      return Element.prototype.querySelector.call(element, selector)
+    },
 
-  findOne(selector, element = document.documentElement) {
-    return Element.prototype.querySelector.call(element, selector)
-  },
+    children(element, selector) {
+      return [].concat(...element.children).filter(child => child.matches(selector))
+    },
 
-  children(element, selector) {
-    return [].concat(...element.children).filter(child => child.matches(selector))
-  },
+    parents(element, selector) {
+      const parents = []
+      let ancestor = element.parentNode.closest(selector)
 
-  parents(element, selector) {
-    const parents = []
-    let ancestor = element.parentNode.closest(selector)
-
-    while (ancestor) {
-      parents.push(ancestor)
-      ancestor = ancestor.parentNode.closest(selector)
-    }
-
-    return parents
-  },
-
-  prev(element, selector) {
-    let previous = element.previousElementSibling
-
-    while (previous) {
-      if (previous.matches(selector)) {
-        return [previous]
+      while (ancestor) {
+        parents.push(ancestor)
+        ancestor = ancestor.parentNode.closest(selector)
       }
 
-      previous = previous.previousElementSibling
-    }
+      return parents
+    },
 
-    return []
-  },
-  // TODO: this is now unused; remove later along with prev()
-  next(element, selector) {
-    let next = element.nextElementSibling
+    prev(element, selector) {
+      let previous = element.previousElementSibling
 
-    while (next) {
-      if (next.matches(selector)) {
-        return [next]
+      while (previous) {
+        if (previous.matches(selector)) {
+          return [previous]
+        }
+
+        previous = previous.previousElementSibling
       }
 
-      next = next.nextElementSibling
+      return []
+    },
+    // TODO: this is now unused; remove later along with prev()
+    next(element, selector) {
+      let next = element.nextElementSibling
+
+      while (next) {
+        if (next.matches(selector)) {
+          return [next]
+        }
+
+        next = next.nextElementSibling
+      }
+
+      return []
+    },
+
+    focusableChildren(element) {
+      const focusables = [
+        'a',
+        'button',
+        'input',
+        'textarea',
+        'select',
+        'details',
+        '[tabindex]',
+        '[contenteditable="true"]'
+      ].map(selector => `${selector}:not([tabindex^="-"])`).join(',')
+
+      return this.find(focusables, element).filter(el => !isDisabled(el) && isVisible(el))
     }
-
-    return []
-  },
-
-  focusableChildren(element) {
-    const focusables = [
-      'a',
-      'button',
-      'input',
-      'textarea',
-      'select',
-      'details',
-      '[tabindex]',
-      '[contenteditable="true"]'
-    ].map(selector => `${selector}:not([tabindex^="-"])`).join(',')
-
-    return this.find(focusables, element).filter(el => !isDisabled(el) && isVisible(el))
   }
 }
-
+const SelectorEngine = SelectorEngineC;
 export default SelectorEngine

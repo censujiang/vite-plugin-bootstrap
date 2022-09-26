@@ -90,22 +90,24 @@
     }
 
     toHtml() {
-      const templateWrapper = document.createElement('div');
-      templateWrapper.innerHTML = this._maybeSanitize(this._config.template);
+      if (!undefined.SSR) {
+        const templateWrapper = document.createElement('div');
+        templateWrapper.innerHTML = this._maybeSanitize(this._config.template);
 
-      for (const [selector, text] of Object.entries(this._config.content)) {
-        this._setContent(templateWrapper, text, selector);
+        for (const [selector, text] of Object.entries(this._config.content)) {
+          this._setContent(templateWrapper, text, selector);
+        }
+
+        const template = templateWrapper.children[0];
+
+        const extraClass = this._resolvePossibleFunction(this._config.extraClass);
+
+        if (extraClass) {
+          template.classList.add(...extraClass.split(' '));
+        }
+
+        return template;
       }
-
-      const template = templateWrapper.children[0];
-
-      const extraClass = this._resolvePossibleFunction(this._config.extraClass);
-
-      if (extraClass) {
-        template.classList.add(...extraClass.split(' '));
-      }
-
-      return template;
     } // Private
 
 

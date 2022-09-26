@@ -117,16 +117,18 @@
 
 
     _configAfterMerge(config) {
-      // TODO: on v6 target should be given explicitly & remove the {target: 'ss-target'} case
-      config.target = index.getElement(config.target) || document.body; // TODO: v6 Only for backwards compatibility reasons. Use rootMargin only
+      if (!undefined.SSR) {
+        // TODO: on v6 target should be given explicitly & remove the {target: 'ss-target'} case
+        config.target = index.getElement(config.target) || document.body; // TODO: v6 Only for backwards compatibility reasons. Use rootMargin only
 
-      config.rootMargin = config.offset ? `${config.offset}px 0px -30%` : config.rootMargin;
+        config.rootMargin = config.offset ? `${config.offset}px 0px -30%` : config.rootMargin;
 
-      if (typeof config.threshold === 'string') {
-        config.threshold = config.threshold.split(',').map(value => Number.parseFloat(value));
+        if (typeof config.threshold === 'string') {
+          config.threshold = config.threshold.split(',').map(value => Number.parseFloat(value));
+        }
+
+        return config;
       }
-
-      return config;
     }
 
     _maybeEnableSmoothScroll() {
@@ -169,42 +171,44 @@
 
 
     _observerCallback(entries) {
-      const targetElement = entry => this._targetLinks.get(`#${entry.target.id}`);
+      if (!undefined.SSR) {
+        const targetElement = entry => this._targetLinks.get(`#${entry.target.id}`);
 
-      const activate = entry => {
-        this._previousScrollData.visibleEntryTop = entry.target.offsetTop;
+        const activate = entry => {
+          this._previousScrollData.visibleEntryTop = entry.target.offsetTop;
 
-        this._process(targetElement(entry));
-      };
+          this._process(targetElement(entry));
+        };
 
-      const parentScrollTop = (this._rootElement || document.documentElement).scrollTop;
-      const userScrollsDown = parentScrollTop >= this._previousScrollData.parentScrollTop;
-      this._previousScrollData.parentScrollTop = parentScrollTop;
+        const parentScrollTop = (this._rootElement || document.documentElement).scrollTop;
+        const userScrollsDown = parentScrollTop >= this._previousScrollData.parentScrollTop;
+        this._previousScrollData.parentScrollTop = parentScrollTop;
 
-      for (const entry of entries) {
-        if (!entry.isIntersecting) {
-          this._activeTarget = null;
+        for (const entry of entries) {
+          if (!entry.isIntersecting) {
+            this._activeTarget = null;
 
-          this._clearActiveClass(targetElement(entry));
+            this._clearActiveClass(targetElement(entry));
 
-          continue;
-        }
-
-        const entryIsLowerThanPrevious = entry.target.offsetTop >= this._previousScrollData.visibleEntryTop; // if we are scrolling down, pick the bigger offsetTop
-
-        if (userScrollsDown && entryIsLowerThanPrevious) {
-          activate(entry); // if parent isn't scrolled, let's keep the first visible item, breaking the iteration
-
-          if (!parentScrollTop) {
-            return;
+            continue;
           }
 
-          continue;
-        } // if we are scrolling up, pick the smallest offsetTop
+          const entryIsLowerThanPrevious = entry.target.offsetTop >= this._previousScrollData.visibleEntryTop; // if we are scrolling down, pick the bigger offsetTop
+
+          if (userScrollsDown && entryIsLowerThanPrevious) {
+            activate(entry); // if parent isn't scrolled, let's keep the first visible item, breaking the iteration
+
+            if (!parentScrollTop) {
+              return;
+            }
+
+            continue;
+          } // if we are scrolling up, pick the smallest offsetTop
 
 
-        if (!userScrollsDown && !entryIsLowerThanPrevious) {
-          activate(entry);
+          if (!userScrollsDown && !entryIsLowerThanPrevious) {
+            activate(entry);
+          }
         }
       }
     }

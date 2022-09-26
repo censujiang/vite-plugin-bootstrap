@@ -135,6 +135,10 @@
       this.tip = null;
 
       this._setListeners();
+
+      if (!this._config.selector) {
+        this._fixTitle();
+      }
     } // Getters
 
 
@@ -163,24 +167,12 @@
       this._isEnabled = !this._isEnabled;
     }
 
-    toggle(event) {
+    toggle() {
       if (!this._isEnabled) {
         return;
       }
 
-      if (event) {
-        const context = this._initializeOnDelegatedTarget(event);
-
-        context._activeTrigger.click = !context._activeTrigger.click;
-
-        if (context._isWithActiveTrigger()) {
-          context._enter();
-        } else {
-          context._leave();
-        }
-
-        return;
-      }
+      this._activeTrigger.click = !this._activeTrigger.click;
 
       if (this._isShown()) {
         this._leave();
@@ -199,8 +191,8 @@
         this.tip.remove();
       }
 
-      if (this._config.originalTitle) {
-        this._element.setAttribute('title', this._config.originalTitle);
+      if (this._element.getAttribute('data-bs-original-title')) {
+        this._element.setAttribute('title', this._element.getAttribute('data-bs-original-title'));
       }
 
       this._disposePopper();
@@ -209,70 +201,72 @@
     }
 
     show() {
-      if (this._element.style.display === 'none') {
-        throw new Error('Please use show on visible elements');
-      }
-
-      if (!(this._isWithContent() && this._isEnabled)) {
-        return;
-      }
-
-      const showEvent = EventHandler__default.default.trigger(this._element, this.constructor.eventName(EVENT_SHOW));
-      const shadowRoot = index.findShadowRoot(this._element);
-
-      const isInTheDom = (shadowRoot || this._element.ownerDocument.documentElement).contains(this._element);
-
-      if (showEvent.defaultPrevented || !isInTheDom) {
-        return;
-      } // todo v6 remove this OR make it optional
-
-
-      if (this.tip) {
-        this.tip.remove();
-        this.tip = null;
-      }
-
-      const tip = this._getTipElement();
-
-      this._element.setAttribute('aria-describedby', tip.getAttribute('id'));
-
-      const {
-        container
-      } = this._config;
-
-      if (!this._element.ownerDocument.documentElement.contains(this.tip)) {
-        container.append(tip);
-        EventHandler__default.default.trigger(this._element, this.constructor.eventName(EVENT_INSERTED));
-      }
-
-      if (this._popper) {
-        this._popper.update();
-      } else {
-        this._popper = this._createPopper(tip);
-      }
-
-      tip.classList.add(CLASS_NAME_SHOW); // If this is a touch-enabled device we add extra
-      // empty mouseover listeners to the body's immediate children;
-      // only needed because of broken event delegation on iOS
-      // https://www.quirksmode.org/blog/archives/2014/02/mouse_event_bub.html
-
-      if ('ontouchstart' in document.documentElement) {
-        for (const element of [].concat(...document.body.children)) {
-          EventHandler__default.default.on(element, 'mouseover', index.noop);
-        }
-      }
-
-      const complete = () => {
-        EventHandler__default.default.trigger(this._element, this.constructor.eventName(EVENT_SHOWN));
-
-        if (this._isHovered === false) {
-          this._leave();
+      if (!undefined.SSR) {
+        if (this._element.style.display === 'none') {
+          throw new Error('Please use show on visible elements');
         }
 
-        this._isHovered = false;
-      };
+        if (!(this._isWithContent() && this._isEnabled)) {
+          return;
+        }
 
-      this._queueCallback(complete, this.tip, this._isAnimated());
+        const showEvent = EventHandler__default.default.trigger(this._element, this.constructor.eventName(EVENT_SHOW));
+        const shadowRoot = index.findShadowRoot(this._element);
+
+        const isInTheDom = (shadowRoot || this._element.ownerDocument.documentElement).contains(this._element);
+
+        if (showEvent.defaultPrevented || !isInTheDom) {
+          return;
+        } // todo v6 remove this OR make it optional
+
+
+        if (this.tip) {
+          this.tip.remove();
+          this.tip = null;
+        }
+
+        const tip = this._getTipElement();
+
+        this._element.setAttribute('aria-describedby', tip.getAttribute('id'));
+
+        const {
+          container
+        } = this._config;
+
+        if (!this._element.ownerDocument.documentElement.contains(this.tip)) {
+          container.append(tip);
+          EventHandler__default.default.trigger(this._element, this.constructor.eventName(EVENT_INSERTED));
+        }
+
+        if (this._popper) {
+          this._popper.update();
+        } else {
+          this._popper = this._createPopper(tip);
+        }
+
+        tip.classList.add(CLASS_NAME_SHOW); // If this is a touch-enabled device we add extra
+        // empty mouseover listeners to the body's immediate children;
+        // only needed because of broken event delegation on iOS
+        // https://www.quirksmode.org/blog/archives/2014/02/mouse_event_bub.html
+
+        if ('ontouchstart' in document.documentElement) {
+          for (const element of [].concat(...document.body.children)) {
+            EventHandler__default.default.on(element, 'mouseover', index.noop);
+          }
+        }
+
+        const complete = () => {
+          EventHandler__default.default.trigger(this._element, this.constructor.eventName(EVENT_SHOWN));
+
+          if (this._isHovered === false) {
+            this._leave();
+          }
+
+          this._isHovered = false;
+        };
+
+        this._queueCallback(complete, this.tip, this._isAnimated());
+      }
     }
 
     hide() {
@@ -291,9 +285,11 @@
       tip.classList.remove(CLASS_NAME_SHOW); // If this is a touch-enabled device we remove the extra
       // empty mouseover listeners we added for iOS support
 
-      if ('ontouchstart' in document.documentElement) {
-        for (const element of [].concat(...document.body.children)) {
-          EventHandler__default.default.off(element, 'mouseover', index.noop);
+      if (!undefined.SSR) {
+        if ('ontouchstart' in document.documentElement) {
+          for (const element of [].concat(...document.body.children)) {
+            EventHandler__default.default.off(element, 'mouseover', index.noop);
+          }
         }
       }
 
@@ -393,7 +389,7 @@
     }
 
     _getTitle() {
-      return this._resolvePossibleFunction(this._config.title) || this._config.originalTitle;
+      return this._resolvePossibleFunction(this._config.title) || this._element.getAttribute('data-bs-original-title');
     } // Private
 
 
@@ -479,7 +475,11 @@
 
       for (const trigger of triggers) {
         if (trigger === 'click') {
-          EventHandler__default.default.on(this._element, this.constructor.eventName(EVENT_CLICK), this._config.selector, event => this.toggle(event));
+          EventHandler__default.default.on(this._element, this.constructor.eventName(EVENT_CLICK), this._config.selector, event => {
+            const context = this._initializeOnDelegatedTarget(event);
+
+            context.toggle();
+          });
         } else if (trigger !== TRIGGER_MANUAL) {
           const eventIn = trigger === TRIGGER_HOVER ? this.constructor.eventName(EVENT_MOUSEENTER) : this.constructor.eventName(EVENT_FOCUSIN);
           const eventOut = trigger === TRIGGER_HOVER ? this.constructor.eventName(EVENT_MOUSELEAVE) : this.constructor.eventName(EVENT_FOCUSOUT);
@@ -507,19 +507,10 @@
       };
 
       EventHandler__default.default.on(this._element.closest(SELECTOR_MODAL), EVENT_MODAL_HIDE, this._hideModalHandler);
-
-      if (this._config.selector) {
-        this._config = { ...this._config,
-          trigger: 'manual',
-          selector: ''
-        };
-      } else {
-        this._fixTitle();
-      }
     }
 
     _fixTitle() {
-      const title = this._config.originalTitle;
+      const title = this._element.getAttribute('title');
 
       if (!title) {
         return;
@@ -528,6 +519,9 @@
       if (!this._element.getAttribute('aria-label') && !this._element.textContent.trim()) {
         this._element.setAttribute('aria-label', title);
       }
+
+      this._element.setAttribute('data-bs-original-title', title); // DO NOT USE IT. Is only for backwards compatibility
+
 
       this._element.removeAttribute('title');
     }
@@ -591,26 +585,26 @@
     }
 
     _configAfterMerge(config) {
-      config.container = config.container === false ? document.body : index.getElement(config.container);
+      if (!undefined.SSR) {
+        config.container = config.container === false ? document.body : index.getElement(config.container);
 
-      if (typeof config.delay === 'number') {
-        config.delay = {
-          show: config.delay,
-          hide: config.delay
-        };
+        if (typeof config.delay === 'number') {
+          config.delay = {
+            show: config.delay,
+            hide: config.delay
+          };
+        }
+
+        if (typeof config.title === 'number') {
+          config.title = config.title.toString();
+        }
+
+        if (typeof config.content === 'number') {
+          config.content = config.content.toString();
+        }
+
+        return config;
       }
-
-      config.originalTitle = this._element.getAttribute('title') || '';
-
-      if (typeof config.title === 'number') {
-        config.title = config.title.toString();
-      }
-
-      if (typeof config.content === 'number') {
-        config.content = config.content.toString();
-      }
-
-      return config;
     }
 
     _getDelegateConfig() {
@@ -620,10 +614,12 @@
         if (this.constructor.Default[key] !== this._config[key]) {
           config[key] = this._config[key];
         }
-      } // In the future can be replaced with:
+      }
+
+      config.selector = false;
+      config.trigger = 'manual'; // In the future can be replaced with:
       // const keysWithDifferentValues = Object.entries(this._config).filter(entry => this.constructor.Default[entry[0]] !== this._config[entry[0]])
       // `Object.fromEntries(keysWithDifferentValues)`
-
 
       return config;
     }

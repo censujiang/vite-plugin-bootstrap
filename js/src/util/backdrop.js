@@ -107,17 +107,19 @@ class Backdrop extends Config {
 
   // Private
   _getElement() {
-    if (!this._element) {
-      const backdrop = document.createElement('div')
-      backdrop.className = this._config.className
-      if (this._config.isAnimated) {
-        backdrop.classList.add(CLASS_NAME_FADE)
+    if (!import.meta.env.SSR) {
+      if (!this._element) {
+        const backdrop = document.createElement('div')
+        backdrop.className = this._config.className
+        if (this._config.isAnimated) {
+          backdrop.classList.add(CLASS_NAME_FADE)
+        }
+
+        this._element = backdrop
       }
 
-      this._element = backdrop
+      return this._element
     }
-
-    return this._element
   }
 
   _configAfterMerge(config) {

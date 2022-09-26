@@ -43,17 +43,19 @@ const DefaultType = {
 
 class Swipe extends Config {
   constructor(element, config) {
-    super()
-    this._element = element
+    if (!import.meta.env.SSR) {
+      super()
+      this._element = element
 
-    if (!element || !Swipe.isSupported()) {
-      return
+      if (!element || !Swipe.isSupported()) {
+        return
+      }
+
+      this._config = this._getConfig(config)
+      this._deltaX = 0
+      this._supportPointerEvents = Boolean(window.PointerEvent)
+      this._initEvents()
     }
-
-    this._config = this._getConfig(config)
-    this._deltaX = 0
-    this._supportPointerEvents = Boolean(window.PointerEvent)
-    this._initEvents()
   }
 
   // Getters
@@ -139,7 +141,9 @@ class Swipe extends Config {
 
   // Static
   static isSupported() {
-    return 'ontouchstart' in document.documentElement || navigator.maxTouchPoints > 0
+    if (!import.meta.env.SSR) {
+      return 'ontouchstart' in document.documentElement || navigator.maxTouchPoints > 0
+    }
   }
 }
 

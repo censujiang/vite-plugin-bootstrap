@@ -151,9 +151,11 @@
       // https://www.quirksmode.org/blog/archives/2014/02/mouse_event_bub.html
 
 
-      if ('ontouchstart' in document.documentElement && !this._parent.closest(SELECTOR_NAVBAR_NAV)) {
-        for (const element of [].concat(...document.body.children)) {
-          EventHandler__default.default.on(element, 'mouseover', index.noop);
+      if (!undefined.SSR) {
+        if ('ontouchstart' in document.documentElement && !this._parent.closest(SELECTOR_NAVBAR_NAV)) {
+          for (const element of [].concat(...document.body.children)) {
+            EventHandler__default.default.on(element, 'mouseover', index.noop);
+          }
         }
       }
 
@@ -206,9 +208,11 @@
       // empty mouseover listeners we added for iOS support
 
 
-      if ('ontouchstart' in document.documentElement) {
-        for (const element of [].concat(...document.body.children)) {
-          EventHandler__default.default.off(element, 'mouseover', index.noop);
+      if (!undefined.SSR) {
+        if ('ontouchstart' in document.documentElement) {
+          for (const element of [].concat(...document.body.children)) {
+            EventHandler__default.default.off(element, 'mouseover', index.noop);
+          }
         }
       }
 

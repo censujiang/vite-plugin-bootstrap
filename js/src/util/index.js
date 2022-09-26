@@ -23,11 +23,13 @@ const toType = object => {
  */
 
 const getUID = prefix => {
-  do {
-    prefix += Math.floor(Math.random() * MAX_UID)
-  } while (document.getElementById(prefix))
+  if (!import.meta.env.SSR) {
+    do {
+      prefix += Math.floor(Math.random() * MAX_UID)
+    } while (document.getElementById(prefix))
 
-  return prefix
+    return prefix
+  }
 }
 
 const getSelector = element => {
@@ -57,9 +59,10 @@ const getSelector = element => {
 
 const getSelectorFromElement = element => {
   const selector = getSelector(element)
-
-  if (selector) {
-    return document.querySelector(selector) ? selector : null
+  if (!import.meta.env.SSR) {
+    if (selector) {
+      return document.querySelector(selector) ? selector : null
+    }
   }
 
   return null
@@ -67,31 +70,34 @@ const getSelectorFromElement = element => {
 
 const getElementFromSelector = element => {
   const selector = getSelector(element)
-
-  return selector ? document.querySelector(selector) : null
+  if (!import.meta.env.SSR) {
+    return selector ? document.querySelector(selector) : null
+  }
 }
 
 const getTransitionDurationFromElement = element => {
-  if (!element) {
-    return 0
+  if (!import.meta.env.SSR) {
+    if (!element) {
+      return 0
+    }
+
+    // Get transition-duration of the element
+    let { transitionDuration, transitionDelay } = window.getComputedStyle(element)
+
+    const floatTransitionDuration = Number.parseFloat(transitionDuration)
+    const floatTransitionDelay = Number.parseFloat(transitionDelay)
+
+    // Return 0 if element or transition duration is not found
+    if (!floatTransitionDuration && !floatTransitionDelay) {
+      return 0
+    }
+
+    // If multiple durations are defined, take the first
+    transitionDuration = transitionDuration.split(',')[0]
+    transitionDelay = transitionDelay.split(',')[0]
+
+    return (Number.parseFloat(transitionDuration) + Number.parseFloat(transitionDelay)) * MILLISECONDS_MULTIPLIER
   }
-
-  // Get transition-duration of the element
-  let { transitionDuration, transitionDelay } = window.getComputedStyle(element)
-
-  const floatTransitionDuration = Number.parseFloat(transitionDuration)
-  const floatTransitionDelay = Number.parseFloat(transitionDelay)
-
-  // Return 0 if element or transition duration is not found
-  if (!floatTransitionDuration && !floatTransitionDelay) {
-    return 0
-  }
-
-  // If multiple durations are defined, take the first
-  transitionDuration = transitionDuration.split(',')[0]
-  transitionDelay = transitionDelay.split(',')[0]
-
-  return (Number.parseFloat(transitionDuration) + Number.parseFloat(transitionDelay)) * MILLISECONDS_MULTIPLIER
 }
 
 const triggerTransitionEnd = element => {
@@ -115,9 +121,10 @@ const getElement = object => {
   if (isElement(object)) {
     return object.jquery ? object[0] : object
   }
-
-  if (typeof object === 'string' && object.length > 0) {
-    return document.querySelector(object)
+  if (!import.meta.env.SSR) {
+    if (typeof object === 'string' && object.length > 0) {
+      return document.querySelector(object)
+    }
   }
 
   return null
@@ -167,8 +174,10 @@ const isDisabled = element => {
 }
 
 const findShadowRoot = element => {
-  if (!document.documentElement.attachShadow) {
-    return null
+  if (!import.meta.env.SSR) {
+    if (!document.documentElement.attachShadow) {
+      return null
+    }
   }
 
   // Can find the shadow root otherwise it'll return the document
@@ -189,7 +198,7 @@ const findShadowRoot = element => {
   return findShadowRoot(element.parentNode)
 }
 
-const noop = () => {}
+const noop = () => { }
 
 /**
  * Trick to restart an element's animation
@@ -204,8 +213,10 @@ const reflow = element => {
 }
 
 const getjQuery = () => {
-  if (window.jQuery && !document.body.hasAttribute('data-bs-no-jquery')) {
-    return window.jQuery
+  if (!import.meta.env.SSR) {
+    if (window.jQuery && !document.body.hasAttribute('data-bs-no-jquery')) {
+      return window.jQuery
+    }
   }
 
   return null
@@ -214,23 +225,29 @@ const getjQuery = () => {
 const DOMContentLoadedCallbacks = []
 
 const onDOMContentLoaded = callback => {
-  if (document.readyState === 'loading') {
-    // add listener on the first call when the document is in loading state
-    if (!DOMContentLoadedCallbacks.length) {
-      document.addEventListener('DOMContentLoaded', () => {
-        for (const callback of DOMContentLoadedCallbacks) {
-          callback()
-        }
-      })
-    }
+  if (!import.meta.env.SSR) {
+    if (document.readyState === 'loading') {
+      // add listener on the first call when the document is in loading state
+      if (!DOMContentLoadedCallbacks.length) {
+        document.addEventListener('DOMContentLoaded', () => {
+          for (const callback of DOMContentLoadedCallbacks) {
+            callback()
+          }
+        })
+      }
 
-    DOMContentLoadedCallbacks.push(callback)
-  } else {
-    callback()
+      DOMContentLoadedCallbacks.push(callback)
+    } else {
+      callback()
+    }
   }
 }
 
-const isRTL = () => document.documentElement.dir === 'rtl'
+const isRTL = () => {
+  if (!import.meta.env.SSR) {
+    document.documentElement.dir === 'rtl'
+  }
+}
 
 const defineJQueryPlugin = plugin => {
   onDOMContentLoaded(() => {

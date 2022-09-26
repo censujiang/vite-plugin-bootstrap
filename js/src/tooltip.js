@@ -69,9 +69,9 @@ const Default = {
   sanitizeFn: null,
   selector: false,
   template: '<div class="tooltip" role="tooltip">' +
-            '<div class="tooltip-arrow"></div>' +
-            '<div class="tooltip-inner"></div>' +
-            '</div>',
+    '<div class="tooltip-arrow"></div>' +
+    '<div class="tooltip-inner"></div>' +
+    '</div>',
   title: '',
   trigger: 'hover focus'
 }
@@ -185,68 +185,70 @@ class Tooltip extends BaseComponent {
   }
 
   show() {
-    if (this._element.style.display === 'none') {
-      throw new Error('Please use show on visible elements')
-    }
-
-    if (!(this._isWithContent() && this._isEnabled)) {
-      return
-    }
-
-    const showEvent = EventHandler.trigger(this._element, this.constructor.eventName(EVENT_SHOW))
-    const shadowRoot = findShadowRoot(this._element)
-    const isInTheDom = (shadowRoot || this._element.ownerDocument.documentElement).contains(this._element)
-
-    if (showEvent.defaultPrevented || !isInTheDom) {
-      return
-    }
-
-    // todo v6 remove this OR make it optional
-    if (this.tip) {
-      this.tip.remove()
-      this.tip = null
-    }
-
-    const tip = this._getTipElement()
-
-    this._element.setAttribute('aria-describedby', tip.getAttribute('id'))
-
-    const { container } = this._config
-
-    if (!this._element.ownerDocument.documentElement.contains(this.tip)) {
-      container.append(tip)
-      EventHandler.trigger(this._element, this.constructor.eventName(EVENT_INSERTED))
-    }
-
-    if (this._popper) {
-      this._popper.update()
-    } else {
-      this._popper = this._createPopper(tip)
-    }
-
-    tip.classList.add(CLASS_NAME_SHOW)
-
-    // If this is a touch-enabled device we add extra
-    // empty mouseover listeners to the body's immediate children;
-    // only needed because of broken event delegation on iOS
-    // https://www.quirksmode.org/blog/archives/2014/02/mouse_event_bub.html
-    if ('ontouchstart' in document.documentElement) {
-      for (const element of [].concat(...document.body.children)) {
-        EventHandler.on(element, 'mouseover', noop)
-      }
-    }
-
-    const complete = () => {
-      EventHandler.trigger(this._element, this.constructor.eventName(EVENT_SHOWN))
-
-      if (this._isHovered === false) {
-        this._leave()
+    if (!import.meta.env.SSR) {
+      if (this._element.style.display === 'none') {
+        throw new Error('Please use show on visible elements')
       }
 
-      this._isHovered = false
-    }
+      if (!(this._isWithContent() && this._isEnabled)) {
+        return
+      }
 
-    this._queueCallback(complete, this.tip, this._isAnimated())
+      const showEvent = EventHandler.trigger(this._element, this.constructor.eventName(EVENT_SHOW))
+      const shadowRoot = findShadowRoot(this._element)
+      const isInTheDom = (shadowRoot || this._element.ownerDocument.documentElement).contains(this._element)
+
+      if (showEvent.defaultPrevented || !isInTheDom) {
+        return
+      }
+
+      // todo v6 remove this OR make it optional
+      if (this.tip) {
+        this.tip.remove()
+        this.tip = null
+      }
+
+      const tip = this._getTipElement()
+
+      this._element.setAttribute('aria-describedby', tip.getAttribute('id'))
+
+      const { container } = this._config
+
+      if (!this._element.ownerDocument.documentElement.contains(this.tip)) {
+        container.append(tip)
+        EventHandler.trigger(this._element, this.constructor.eventName(EVENT_INSERTED))
+      }
+
+      if (this._popper) {
+        this._popper.update()
+      } else {
+        this._popper = this._createPopper(tip)
+      }
+
+      tip.classList.add(CLASS_NAME_SHOW)
+
+      // If this is a touch-enabled device we add extra
+      // empty mouseover listeners to the body's immediate children;
+      // only needed because of broken event delegation on iOS
+      // https://www.quirksmode.org/blog/archives/2014/02/mouse_event_bub.html
+      if ('ontouchstart' in document.documentElement) {
+        for (const element of [].concat(...document.body.children)) {
+          EventHandler.on(element, 'mouseover', noop)
+        }
+      }
+
+      const complete = () => {
+        EventHandler.trigger(this._element, this.constructor.eventName(EVENT_SHOWN))
+
+        if (this._isHovered === false) {
+          this._leave()
+        }
+
+        this._isHovered = false
+      }
+
+      this._queueCallback(complete, this.tip, this._isAnimated())
+    }
   }
 
   hide() {
@@ -264,9 +266,11 @@ class Tooltip extends BaseComponent {
 
     // If this is a touch-enabled device we remove the extra
     // empty mouseover listeners we added for iOS support
-    if ('ontouchstart' in document.documentElement) {
-      for (const element of [].concat(...document.body.children)) {
-        EventHandler.off(element, 'mouseover', noop)
+    if (!import.meta.env.SSR) {
+      if ('ontouchstart' in document.documentElement) {
+        for (const element of [].concat(...document.body.children)) {
+          EventHandler.off(element, 'mouseover', noop)
+        }
       }
     }
 
@@ -569,24 +573,26 @@ class Tooltip extends BaseComponent {
   }
 
   _configAfterMerge(config) {
-    config.container = config.container === false ? document.body : getElement(config.container)
+    if (!import.meta.env.SSR) {
+      config.container = config.container === false ? document.body : getElement(config.container)
 
-    if (typeof config.delay === 'number') {
-      config.delay = {
-        show: config.delay,
-        hide: config.delay
+      if (typeof config.delay === 'number') {
+        config.delay = {
+          show: config.delay,
+          hide: config.delay
+        }
       }
-    }
 
-    if (typeof config.title === 'number') {
-      config.title = config.title.toString()
-    }
+      if (typeof config.title === 'number') {
+        config.title = config.title.toString()
+      }
 
-    if (typeof config.content === 'number') {
-      config.content = config.content.toString()
-    }
+      if (typeof config.content === 'number') {
+        config.content = config.content.toString()
+      }
 
-    return config
+      return config
+    }
   }
 
   _getDelegateConfig() {

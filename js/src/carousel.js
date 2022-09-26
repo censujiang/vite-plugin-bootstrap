@@ -91,22 +91,22 @@ const DefaultType = {
  */
 
 class Carousel extends BaseComponent {
-  constructor(element, config) {
-    super(element, config)
+    constructor(element, config) {
+      super(element, config)
 
-    this._interval = null
-    this._activeElement = null
-    this._isSliding = false
-    this.touchTimeout = null
-    this._swipeHelper = null
+      this._interval = null
+      this._activeElement = null
+      this._isSliding = false
+      this.touchTimeout = null
+      this._swipeHelper = null
 
-    this._indicatorsElement = SelectorEngine.findOne(SELECTOR_INDICATORS, this._element)
-    this._addEventListeners()
+      this._indicatorsElement = SelectorEngine.findOne(SELECTOR_INDICATORS, this._element)
+      this._addEventListeners()
 
-    if (this._config.ride === CLASS_NAME_CAROUSEL) {
-      this.cycle()
+      if (this._config.ride === CLASS_NAME_CAROUSEL) {
+        this.cycle()
+      }
     }
-  }
 
   // Getters
   static get Default() {
@@ -130,8 +130,10 @@ class Carousel extends BaseComponent {
     // FIXME TODO use `document.visibilityState`
     // Don't call next when the page isn't visible
     // or the carousel or its parent isn't visible
-    if (!document.hidden && isVisible(this._element)) {
-      this.next()
+    if (!import.meta.env.SSR) {
+      if (!document.hidden && isVisible(this._element)) {
+        this.next()
+      }
     }
   }
 

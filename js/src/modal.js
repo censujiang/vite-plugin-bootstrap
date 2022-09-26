@@ -110,9 +110,9 @@ class Modal extends BaseComponent {
     this._isTransitioning = true
 
     this._scrollBar.hide()
-
-    document.body.classList.add(CLASS_NAME_OPEN)
-
+    if (!import.meta.env.SSR) {
+      document.body.classList.add(CLASS_NAME_OPEN)
+    }
     this._adjustDialog()
 
     this._backdrop.show(() => this._showElement(relatedTarget))
@@ -168,8 +168,10 @@ class Modal extends BaseComponent {
 
   _showElement(relatedTarget) {
     // try to append dynamic modal
-    if (!document.body.contains(this._element)) {
-      document.body.append(this._element)
+    if (!import.meta.env.SSR) {
+      if (!document.body.contains(this._element)) {
+        document.body.append(this._element)
+      }
     }
 
     this._element.style.display = 'block'
@@ -247,13 +249,14 @@ class Modal extends BaseComponent {
     this._element.removeAttribute('aria-modal')
     this._element.removeAttribute('role')
     this._isTransitioning = false
-
-    this._backdrop.hide(() => {
-      document.body.classList.remove(CLASS_NAME_OPEN)
-      this._resetAdjustments()
-      this._scrollBar.reset()
-      EventHandler.trigger(this._element, EVENT_HIDDEN)
-    })
+    if (!import.meta.env.SSR) {
+      this._backdrop.hide(() => {
+        document.body.classList.remove(CLASS_NAME_OPEN)
+        this._resetAdjustments()
+        this._scrollBar.reset()
+        EventHandler.trigger(this._element, EVENT_HIDDEN)
+      })
+    }
   }
 
   _isAnimated() {
@@ -265,27 +268,28 @@ class Modal extends BaseComponent {
     if (hideEvent.defaultPrevented) {
       return
     }
+    if (!import.meta.env.SSR) {
+      const isModalOverflowing = this._element.scrollHeight > document.documentElement.clientHeight
+      const initialOverflowY = this._element.style.overflowY
+      // return if the following background transition hasn't yet completed
+      if (initialOverflowY === 'hidden' || this._element.classList.contains(CLASS_NAME_STATIC)) {
+        return
+      }
 
-    const isModalOverflowing = this._element.scrollHeight > document.documentElement.clientHeight
-    const initialOverflowY = this._element.style.overflowY
-    // return if the following background transition hasn't yet completed
-    if (initialOverflowY === 'hidden' || this._element.classList.contains(CLASS_NAME_STATIC)) {
-      return
-    }
+      if (!isModalOverflowing) {
+        this._element.style.overflowY = 'hidden'
+      }
 
-    if (!isModalOverflowing) {
-      this._element.style.overflowY = 'hidden'
-    }
-
-    this._element.classList.add(CLASS_NAME_STATIC)
-    this._queueCallback(() => {
-      this._element.classList.remove(CLASS_NAME_STATIC)
+      this._element.classList.add(CLASS_NAME_STATIC)
       this._queueCallback(() => {
-        this._element.style.overflowY = initialOverflowY
+        this._element.classList.remove(CLASS_NAME_STATIC)
+        this._queueCallback(() => {
+          this._element.style.overflowY = initialOverflowY
+        }, this._dialog)
       }, this._dialog)
-    }, this._dialog)
 
-    this._element.focus()
+      this._element.focus()
+    }
   }
 
   /**
@@ -293,18 +297,20 @@ class Modal extends BaseComponent {
    */
 
   _adjustDialog() {
-    const isModalOverflowing = this._element.scrollHeight > document.documentElement.clientHeight
-    const scrollbarWidth = this._scrollBar.getWidth()
-    const isBodyOverflowing = scrollbarWidth > 0
+    if (!import.meta.env.SSR) {
+      const isModalOverflowing = this._element.scrollHeight > document.documentElement.clientHeight
+      const scrollbarWidth = this._scrollBar.getWidth()
+      const isBodyOverflowing = scrollbarWidth > 0
 
-    if (isBodyOverflowing && !isModalOverflowing) {
-      const property = isRTL() ? 'paddingLeft' : 'paddingRight'
-      this._element.style[property] = `${scrollbarWidth}px`
-    }
+      if (isBodyOverflowing && !isModalOverflowing) {
+        const property = isRTL() ? 'paddingLeft' : 'paddingRight'
+        this._element.style[property] = `${scrollbarWidth}px`
+      }
 
-    if (!isBodyOverflowing && isModalOverflowing) {
-      const property = isRTL() ? 'paddingRight' : 'paddingLeft'
-      this._element.style[property] = `${scrollbarWidth}px`
+      if (!isBodyOverflowing && isModalOverflowing) {
+        const property = isRTL() ? 'paddingRight' : 'paddingLeft'
+        this._element.style[property] = `${scrollbarWidth}px`
+      }
     }
   }
 
