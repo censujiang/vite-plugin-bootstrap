@@ -1,5 +1,5 @@
 {
-  "name": "bootstrap",
+  "name": "vite-plugin-bootstrap",
   "description": "The most popular front-end framework for developing responsive, mobile first projects on the web.",
   "version": "5.2.1",
   "config": {
@@ -15,17 +15,17 @@
     "web"
   ],
   "homepage": "https://getbootstrap.com/",
-  "author": "The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)",
+  "author": "The Bootstrap Authors And CensuJiang (https://github.com/twbs/bootstrap/graphs/contributors)",
   "contributors": [
-    "Twitter, Inc."
+    "Twitter, Inc. & Censujiang"
   ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/twbs/bootstrap.git"
+    "url": "git+https://github.com/censujiang/vite-plugin-bootstrap.git"
   },
   "bugs": {
-    "url": "https://github.com/twbs/bootstrap/issues"
+    "url": "https://github.com/censujiang/vite-plugin-bootstrap/issues"
   },
   "funding": [
     {
